@@ -122,3 +122,8 @@ dist
 #*.code-workspace
 
 # End of https://www.toptal.com/developers/gitignore/api/vscode,node
+
+
+config.json
+security/*
+package-lock.json
