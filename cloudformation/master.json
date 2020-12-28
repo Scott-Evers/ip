@@ -1,0 +1,35 @@
+{
+  "Parameters": {
+    "TemplateDir": {
+      "Type": "String",
+      "Description": "S3 directory which contains the templates (in https:// format)"
+    },
+    "CertificateArn": {
+      "Type": "String",
+      "Description": "The ID of the certificate to associate for IoT",
+      "AllowedPattern": "^arn:.*:cert\\/[\\da-f]*$"
+    }
+  },
+  "Resources": {
+    "IoT": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "Parameters": {
+          "CertificateArn": {"Ref": "CertificateArn"}
+        },
+        "TemplateURL": {
+          "Fn::Join": [
+            "/",
+            [
+              {
+                "Ref": "TemplateDir"
+              },
+              "iot.json"
+            ]
+          ]
+        },
+        "TimeoutInMinutes": 5
+      }
+    }
+  }
+}

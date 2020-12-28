@@ -1,0 +1,130 @@
+{
+    "Parameters": {
+        "CertificateArn": {
+            "Type": "String",
+            "Description": "The ID of the certificate to associate for IoT",
+            "AllowedPattern": "^arn:.*:cert\\/[\\da-f]*$"
+        }
+    },
+    "Resources": {
+        "Thing": {
+            "Type": "AWS::IoT::Thing",
+            "Properties": {
+                "ThingName": {
+                    "Fn::Join": [
+                        "_",
+                        [
+                            "r53_updater",
+                            {
+                                "Ref": "AWS::StackName"
+                            }
+                        ]
+                    ]
+                }
+            }
+        },
+        "ThingPolicy": {
+            "Type": "AWS::IoT::Policy",
+            "Properties": {
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Action": "iot:Connect",
+                            "Resource": {
+                                "Fn::Join": [
+                                    ":",
+                                    [
+                                        "arn:aws:iot",
+                                        {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        {
+                                            "Ref": "AWS::AccountId"
+                                        },
+                                        "*"
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "iot:Publish",
+                            "Resource": {
+                                "Fn::Join": [
+                                    ":",
+                                    [
+                                        "arn:aws:iot",
+                                        {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        {
+                                            "Ref": "AWS::AccountId"
+                                        },
+                                        "*"
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "iot:Subscribe",
+                            "Resource": {
+                                "Fn::Join": [
+                                    ":",
+                                    [
+                                        "arn:aws:iot",
+                                        {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        {
+                                            "Ref": "AWS::AccountId"
+                                        },
+                                        "*"
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "Effect": "Allow",
+                            "Action": "iot:Receive",
+                            "Resource": {
+                                "Fn::Join": [
+                                    ":",
+                                    [
+                                        "arn:aws:iot",
+                                        {
+                                            "Ref": "AWS::Region"
+                                        },
+                                        {
+                                            "Ref": "AWS::AccountId"
+                                        },
+                                        "*"
+                                    ]
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "PolicyName": "r53_updater"
+            }
+        },
+        "ThingCertAttachment": {
+            "Type" : "AWS::IoT::ThingPrincipalAttachment",
+            "Properties" : {
+                "Principal" : {"Ref": "CertificateArn"},
+                "ThingName" : {"Ref":"Thing"}
+              }
+        },
+        "CertPolicyAttachment": {
+            "Type" : "AWS::IoT::PolicyPrincipalAttachment",
+            "Properties" : {
+                "PolicyName" : {"Ref":"ThingPolicy"},
+                "Principal" : {"Ref": "CertificateArn"}
+              }
+          }
+          
+          
+    }
+}

@@ -125,5 +125,7 @@ dist
 
 
 config.json
-security/*
+local_service/creds/*
+!local_service/creds/AmazonRootCA1.pem
 package-lock.json
+cloudformation/cf_input_files/*

@@ -1,65 +1,71 @@
 const fs = require('fs')
 const awsIot = require('aws-iot-device-sdk')
+const conf = require('./config.json')
+const http = require('http');
+
+
+const url = "http://ipinfo.io";
 
 
 
 
 
 
+const cid = Math.random().toString(36)
 var cwd = process.cwd()
-var fd = fs.openSync(process.env.OUTFILE,'w+')
 
-var device = awsIot.device({
+const update = (my_ip) => {
+var shadow = awsIot.thingShadow({
    keyPath: `${cwd}/creds/device.key`,
   certPath: `${cwd}/creds/device.crt`,
-    caPath: `${cwd}/creds/ca1.pem`,
+    caPath: `${cwd}/creds/AmazonRootCA1.pem`,
   clientId: conf.DeviceId,
       host: conf.Endpoint
 });
 
-device
-  .on('connect', function() {
-    console.log('connect')
-    device.subscribe('board')
+shadow.on('connect', () => {
+  shadow.register(conf.DeviceId, () => {
+    shadow.get(conf.DeviceId, cid)
   })
-
-  device
-  .on('message', function(topic, payload) {
-    console.log('message', topic, payload.toString())
-    fs.write(fd, payload + "\n",(err,data) => {
-        if (err) console.error(err)
-    })
-  })
-
-
-
-  device
-  .on('end', function(topic, payload) {
-    console.log('end', topic, payload.toString());
-  });
-
-
-
-  device
-  .on('error', function(topic, payload) {
-    console.log('error', topic, payload);
-  });
+})
+shadow.on('status',  function(name, stat, clientToken, stateObject) {
+  console.log(name,stat,clientToken,stateObject.state.reported)
+  if (clientToken == cid && (!stateObject || !stateObject.state || !stateObject.state.reported || !stateObject.state.reported.ip || stateObject.state.reported.ip != my_ip)) {
+    console.log('needs update')
+    let reported = {
+      state: {
+        reported: {
+          ip: my_ip
+        }
+      }
+    }
+    shadow.update(conf.DeviceId,reported)
+  }
+  shadow.unregister(conf.DeviceId)
+  shadow.end()
+});
+}
 
 
 
-  device
-  .on('offline', function() {
-    console.log('offline');
-  });
 
+http.get(url,(res) => {
+    let body = "";
 
-  device
-  .on('close', function() {
-    console.log('close');
-  });
+    res.on("data", (chunk) => {
+        body += chunk;
+    });
 
+    res.on("end", () => {
+        try {
+            let json = JSON.parse(body);
+            update(json.ip)
+            // do something with JSON
+        } catch (error) {
+            console.error(error.message);
+        };
+    });
 
-  device
-  .on('reconnect', function() {
-    console.log('reconnect');
-  });
+}).on("error", (error) => {
+    console.error(error.message);
+});

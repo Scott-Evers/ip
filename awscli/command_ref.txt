@@ -1,0 +1,3 @@
+# Provision a cert
+iot create-keys-and-certificate --set-as-active --certificate-pem-outfile ../local_service/creds/device.crt --private-key-outfile ../local_service/creds/device.key --query certificateArn
+
